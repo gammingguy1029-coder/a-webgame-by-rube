@@ -178,6 +178,35 @@
       }
       this.y = ny;
 
+      // ---- separate player from enemies ----
+      // The player is pushed out of any enemy body so they can't get wedged
+      // inside or between overlapping enemies. While dashing or invulnerable the
+      // player passes through freely (used to escape a crowd).
+      if (!(this.dashTime > 0 || this.invuln > 0) && ctx.enemies) {
+        for (let i = 0; i < ctx.enemies.length; i++) {
+          const e = ctx.enemies[i];
+          if (!e.alive || !e.w || !e.h) continue;
+          const er = { x: e.x, y: e.y, w: e.w, h: e.h };
+          const pr = this.rect();
+          if (Collision.rectsOverlap(pr, er)) {
+            // Separate player and enemy by splitting the overlap in half so the
+            // player can push through a crowd rather than being hard-ejected and
+            // getting stuck between bodies. The player still can't stand inside
+            // an enemy (no repeated-contact knockback whiplash).
+            const left = (er.x + er.w) - this.x;
+            const right = (this.x + this.w) - er.x;
+            const top = (er.y + er.h) - this.y;
+            const bottom = (this.y + this.h) - er.y;
+            const m = Math.min(left, right, top, bottom);
+            const half = 0.5;
+            if (m === left) { this.x += left * half; e.x -= left * half; }
+            else if (m === right) { this.x -= right * half; e.x += right * half; }
+            else if (m === top) { this.y += top * half; e.y -= top * half; }
+            else { this.y -= bottom * half; e.y += bottom * half; }
+          }
+        }
+      }
+
       // keep within room bounds
       if (this.x < ctx.roomBounds.x) { this.x = ctx.roomBounds.x; this.vx = 0; }
       if (this.x + this.w > ctx.roomBounds.x + ctx.roomBounds.w) { this.x = ctx.roomBounds.x + ctx.roomBounds.w - this.w; this.vx = 0; }
@@ -200,9 +229,10 @@
       const px = this.x + this.w / 2, py = this.y + this.h / 2;
       const muzzleX = px + dir * (this.w / 2);
 
-      // Fire an energy bullet in the facing direction. The projectile system in
-      // rooms.js moves it, stops it at walls, and damages the first enemy it hits.
-      Game.spawnProjectile(muzzleX, py - 3, dir > 0 ? 0 : Math.PI, Weapons.getBulletSpeed(), dmg, 'player', '#4ef0ff');
+      // Fire an energy bullet in the facing direction. It fires from the player's
+      // center height (not above) and has a generous hitbox so it connects with
+      // small ground enemies like slimes instead of passing over their heads.
+      Game.spawnProjectile(muzzleX, py, dir > 0 ? 0 : Math.PI, Weapons.getBulletSpeed(), dmg, 'player', '#4ef0ff');
       // Muzzle flash + recoil spark.
       Game.particles.burst(muzzleX + dir * 4, py, '#4ef0ff', 6, 160, 0.15, 'circle');
     },

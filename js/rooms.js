@@ -194,6 +194,35 @@
       }
     }
 
+    // ---- separate enemies from each other ----
+    // Keeps bodies from stacking into a single spot (which looked like a wall
+    // and made the player feel stuck among them). Cheap O(n^2) with n small.
+    const alive = [];
+    for (const e of room.entities) if (e.alive) alive.push(e);
+    for (let i = 0; i < alive.length; i++) {
+      for (let j = i + 1; j < alive.length; j++) {
+        const a = alive[i], b = alive[j];
+        if (a.type === 'boss' || b.type === 'boss') continue;
+        if (!a.w || !b.w) continue;
+        const ax = a.x + a.w / 2, ay = a.y + a.h / 2;
+        const bx = b.x + b.w / 2, by = b.y + b.h / 2;
+        const dx = bx - ax, dy = by - ay;
+        const minD = (a.w + b.w) / 2 * 0.9;
+        let d = Math.hypot(dx, dy);
+        if (d < minD) {
+          let nx, ny;
+          if (d > 0.5) { nx = dx / d; ny = dy / d; }
+          else {
+            // exactly coincident: separate along a deterministic axis (x)
+            nx = 1; ny = 0;
+          }
+          const push = (minD - Math.max(d, 0.5)) * 0.5 + 1;
+          a.x -= nx * push; a.y -= ny * push;
+          b.x += nx * push; b.y += ny * push;
+        }
+      }
+    }
+
     // ---- projectiles ----
     for (let i = room.projectiles.length - 1; i >= 0; i--) {
       const pr = room.projectiles[i];
@@ -201,22 +230,26 @@
       pr.life -= dt;
       let dead = false;
       if (pr.life <= 0) dead = true;
-      // hit solids
+      // Projectile hit radius. Entity hits use a larger radius than wall hits so
+      // bullets connect with small/short enemies (slimes) rather than passing
+      // over them, and fast bullets don't tunnel through thin targets.
+      const hitR = 10;
+      // hit solids (walls keep a tighter radius so bullets stop crisply at edges)
       for (const s of room.collidables) {
-        if (Collision.circleRect(pr.x, pr.y, 4, s)) { dead = true; break; }
+        if (Collision.circleRect(pr.x, pr.y, 6, s)) { dead = true; break; }
       }
       if (!dead) {
         if (pr.team === 'player') {
           for (const e of room.entities) {
             if (!e.alive) continue;
-            if (Collision.circleRect(pr.x, pr.y, 4, { x: e.x, y: e.y, w: e.w, h: e.h })) {
+            if (Collision.circleRect(pr.x, pr.y, hitR, { x: e.x, y: e.y, w: e.w, h: e.h })) {
               Game.damageEntity(e, pr.dmg, Math.sign(pr.vx), false);
               dead = true; break;
             }
           }
         } else {
           const pr2 = { x: Player.x, y: Player.y, w: Player.w, h: Player.h };
-          if (Collision.circleRect(pr.x, pr.y, 4, pr2)) {
+          if (Collision.circleRect(pr.x, pr.y, hitR, pr2)) {
             Player.takeDamage(pr.dmg, Math.sign(pr.vx) * 0.4, 'projectile');
             dead = true;
           }

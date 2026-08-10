@@ -257,6 +257,9 @@
       const ctx = {
         player: Player,
         collidables: this.room.collidables,
+        // Enemies are passed so the player can be separated from overlapping
+        // them (prevents the player getting stuck inside/among enemy bodies).
+        enemies: this.room.entities,
         roomBounds: this.room.bounds,
         gravity: Player.gravity,
         spawnProjectile: (x, y, ang, speed, dmg, team) => this.spawnProjectile(x, y, ang, speed, dmg, team),
