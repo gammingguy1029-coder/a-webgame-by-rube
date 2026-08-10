@@ -18,6 +18,7 @@
     _fpsCount: 0, _fpsTime: 0,
     coinFly: [],
     floorTitle: '', floorTitleT: 0,
+    _powerSig: '',
 
     // convenience aliases used by other modules
     camera: null,
@@ -345,22 +346,17 @@
       ctx.save();
       // invuln blink
       if (P.iframes > 0 && Math.sin(Date.now() / 60) > 0) ctx.globalAlpha = 0.4;
-      // attack swing
+      // muzzle flash (bullet weapon)
       if (P.attackAnim > 0) {
-        const reach = Weapons.getReach();
-        const arc = Weapons.getArc();
-        const prog = 1 - (P.attackAnim / 0.22);
-        const ang = (prog - 0.5) * arc * 0.8;
+        const mz = P.w / 2 + (1 - P.attackAnim / 0.12) * 8;
         const base = P.facing > 0 ? 0 : Math.PI;
         ctx.save();
         ctx.translate(cx, sy + P.h / 2);
-        ctx.rotate(base + ang);
-        ctx.shadowColor = '#4ef0ff'; ctx.shadowBlur = 16;
-        ctx.strokeStyle = '#4ef0ff'; ctx.lineWidth = 5;
-        ctx.globalAlpha = 0.9;
-        ctx.beginPath(); ctx.moveTo(P.w / 2, 0); ctx.lineTo(P.w / 2 + reach, 0); ctx.stroke();
-        ctx.fillStyle = '#9df3ff';
-        ctx.beginPath(); ctx.arc(P.w / 2 + reach, 0, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.rotate(base);
+        ctx.shadowColor = '#4ef0ff'; ctx.shadowBlur = 14;
+        ctx.strokeStyle = '#9df3ff'; ctx.lineWidth = 4;
+        ctx.globalAlpha = 0.9 * (P.attackAnim / 0.12);
+        ctx.beginPath(); ctx.moveTo(mz, -3); ctx.lineTo(mz + 12, 0); ctx.lineTo(mz, 3); ctx.closePath(); ctx.fill();
         ctx.restore();
       }
 
@@ -696,16 +692,27 @@
         di.classList.add('ready'); di.classList.remove('cooldown');
         di.textContent = 'DASH READY';
       }
-      // powerup chips
+      // powerup chips — only rebuild the DOM when the active set changes, so we
+      // don't destroy/recreate nodes every frame (avoids per-frame UI jank).
       const row = document.getElementById('powerupRow');
-      row.innerHTML = '';
       const pw = Player.powerups;
       const labels = { shield:['SHIELD','shield'], rage:['RAGE','rage'], speed:['SPEED','speed'], magnet:['MAGNET','magnet'], timewarp:['SLOW','warp'], dcoin:['2X COINS','dcoin'] };
+      let sig = '';
+      const chips = [];
       for (const k in pw) {
         if (pw[k] > 0 && labels[k]) {
+          sig += k + ':' + Math.ceil(pw[k]) + ',';
+          chips.push(labels[k][1] + ':' + labels[k][0] + ' ' + Math.ceil(pw[k]));
+        }
+      }
+      if (sig !== this._powerSig) {
+        this._powerSig = sig;
+        row.innerHTML = '';
+        for (const c of chips) {
           const chip = document.createElement('div');
-          chip.className = 'powerup-chip ' + labels[k][1];
-          chip.textContent = labels[k][0] + ' ' + pw[k].toFixed(0);
+          const sp = c.indexOf(':');
+          chip.className = 'powerup-chip ' + c.slice(0, sp);
+          chip.textContent = c.slice(sp + 1);
           row.appendChild(chip);
         }
       }

@@ -124,8 +124,8 @@
         Game.particles.burst(this.x + this.w / 2, this.y + this.h / 2, '#4ef0ff', 10, 180, 0.35);
       }
 
-      // --- attack ---
-      if (Input.consumeAttack() && this.attackCooldown <= 0) {
+      // --- attack (bullet shooter; auto-fires while the control is held) ---
+      if (Input.attackHeld() && this.attackCooldown <= 0) {
         this.attack();
       }
 
@@ -190,38 +190,21 @@
 
     attack() {
       this.attackCooldown = Weapons.getCooldown();
-      this.attackAnim = 0.22;
+      // Short muzzle flash (replaces the old sword-arc animation).
+      this.attackAnim = 0.12;
       this.attackSwing = 0;
       AudioM.play('attack');
 
       const dmg = this.getDamage();
-      const reach = Weapons.getReach();
-      const arc = Weapons.getArc();
+      const dir = this.facing;
       const px = this.x + this.w / 2, py = this.y + this.h / 2;
+      const muzzleX = px + dir * (this.w / 2);
 
-      // Build the arc hitbox; damage enemies whose center falls within reach & arc of facing.
-      const hitEntities = [];
-      const entities = Game.room.entities;
-      for (let i = 0; i < entities.length; i++) {
-        const e = entities[i];
-        if (!e.alive || e.team === 'player') continue;
-        const ex = e.x + (e.w || 12) / 2, ey = e.y + (e.h || 12) / 2;
-        const dx = ex - px, dy = ey - py;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > reach + 16) continue;
-        // angle check
-        let ang = Math.atan2(dy, dx);
-        const facingAng = this.facing > 0 ? 0 : Math.PI;
-        let diff = Math.abs(normalizeAngle(ang - facingAng));
-        if (diff < arc / 2) {
-          hitEntities.push(e);
-        }
-      }
-      // Apply damage + effects
-      hitEntities.forEach((e) => {
-        const dealt = Game.damageEntity(e, dmg, this.facing > 0 ? 1 : -1, this.powerups.rage > 0);
-      });
-      Game.spawnAttackSwing(px, py, this.facing, reach, arc, hitEntities.length > 0);
+      // Fire an energy bullet in the facing direction. The projectile system in
+      // rooms.js moves it, stops it at walls, and damages the first enemy it hits.
+      Game.spawnProjectile(muzzleX, py - 3, dir > 0 ? 0 : Math.PI, Weapons.getBulletSpeed(), dmg, 'player', '#4ef0ff');
+      // Muzzle flash + recoil spark.
+      Game.particles.burst(muzzleX + dir * 4, py, '#4ef0ff', 6, 160, 0.15, 'circle');
     },
 
     takeDamage(dmg, knockX, source) {
@@ -258,12 +241,6 @@
     },
     setShield() { this.powerups.shield = 3; },
   };
-
-  function normalizeAngle(a) {
-    while (a > Math.PI) a -= Math.PI * 2;
-    while (a < -Math.PI) a += Math.PI * 2;
-    return a;
-  }
 
   global.Player = Player;
 })(window);

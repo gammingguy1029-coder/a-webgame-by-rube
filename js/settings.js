@@ -10,9 +10,11 @@
     set(key, value) {
       this.get()[key] = value;
       Save.persist();
-      // Push live to audio if relevant.
+      // Push live to audio if relevant. Note: we intentionally do NOT re-render
+      // the whole settings list here — the settings handlers update their own
+      // control's display, and rebuilding the list on every input event would
+      // destroy the slider/toggle mid-interaction (UI bug).
       if (global.AudioM) AudioM.onSettingsChange();
-      if (global.UI) UI.renderSettings();
     },
 
     isTouch() { return global.Input ? Input.isTouchDevice() : false; },

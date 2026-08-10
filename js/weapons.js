@@ -4,12 +4,14 @@
 (function (global) {
   'use strict';
 
-  // Player weapon config. Swing attack in facing direction.
+  // Player weapon config. The primary attack fires an energy bullet in the
+  // direction the player is facing (bullet-shooter style).
   const Weapons = {
     baseDamage: 15,
-    baseCooldown: 0.35,
+    baseCooldown: 0.32,
+    baseBulletSpeed: 520,
     baseReach: 56,
-    baseArc: 1.9, // radians, centered on facing direction
+    baseArc: 1.9, // radians, used only for the muzzle-flash visual
 
     getDamage() {
       const ug = Save.get().upgrades;
@@ -19,6 +21,7 @@
       const ug = Save.get().upgrades;
       return Math.max(0.08, this.baseCooldown / (1 + ug.attackSpeed * 0.18));
     },
+    getBulletSpeed() { return this.baseBulletSpeed; },
     getReach() { return this.baseReach; },
     getArc() { return this.baseArc; },
   };

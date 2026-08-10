@@ -95,12 +95,15 @@
   }
 
   function generateBossRoom(room) {
-    // arena: flat with a few pillars
+    // Arena: flat with a couple of floating cover blocks. These must NOT form
+    // impassable walls — the ground route to the exit must always stay open.
     const W = room.bounds.w;
-    // center pillars for dodging
     const cx = W / 2;
-    room.platforms.push(makePlatform(cx - 130, GROUND_Y - 120, 26, 120));
-    room.platforms.push(makePlatform(cx + 104, GROUND_Y - 120, 26, 120));
+    // Floating cover blocks, high enough that the player can walk underneath.
+    room.platforms.push(makePlatform(cx - 150, GROUND_Y - 120, 26, 20));
+    room.platforms.push(makePlatform(cx + 120, GROUND_Y - 120, 26, 20));
+    room.platforms.push(makePlatform(cx - 150, GROUND_Y - 60, 26, 20));
+    room.platforms.push(makePlatform(cx + 120, GROUND_Y - 60, 26, 20));
     // boss spawn center
     room.enemies.push({ type: 'boss', x: W / 2 - 40, y: GROUND_Y - 110 });
     room.exit = { x: W - 110, y: GROUND_Y - 40, w: 40, h: 40 };
@@ -125,9 +128,11 @@
       steps++;
       const gap = 60 + Math.random() * (JUMP_DIST - 62);
       let ny = y;
-      // vary height within jump reach
+      // vary height within jump reach. Platforms are kept high enough that a
+      // player running along the ground always clears underneath them, so the
+      // ground route to the exit is never blocked by a low-hanging wall.
       const delta = (Math.random() - 0.5) * 2 * JUMP_H;
-      ny = clamp(ny + delta, GROUND_Y - 140, GROUND_Y);
+      ny = clamp(ny + delta, GROUND_Y - 140, GROUND_Y - 70);
       // never place too high then impossible
       const w = 90 + Math.random() * 120;
       const plat = makePlatform(x + gap, ny, w, 20);

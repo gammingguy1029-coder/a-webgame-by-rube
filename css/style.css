@@ -203,7 +203,7 @@ button { font-family: inherit; }
 
 /* ---------- HUD ---------- */
 .hud { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
-.hud-top { position: absolute; top: 8px; left: 0; right: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 14px; gap: 10px; }
+.hud-top { position: absolute; top: 8px; left: 0; right: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 14px; padding-right: 66px; gap: 10px; }
 .hud-left, .hud-right { background: rgba(8,11,22,0.6); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 90px; }
 .hud-floor { color: var(--neon); font-weight: 800; letter-spacing: 1px; font-size: 13px; }
 .hud-score { color: var(--text-dim); font-size: 12px; }

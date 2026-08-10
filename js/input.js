@@ -21,7 +21,14 @@
     mouse: { x: 0, y: 0 },
 
     isTouchDevice() {
-      return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      // Reliably detect a touch-primary device. Using `'ontouchstart' in window`
+      // alone returns true on many desktops (the property exists on the Window
+      // prototype), which wrongly showed mobile controls on PC.
+      try {
+        if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+      } catch (e) { /* ignore */ }
+      const ua = (navigator.userAgent || '').toLowerCase();
+      return /android|iphone|ipad|ipod|mobile|tablet/i.test(ua);
     },
 
     init() {
@@ -98,6 +105,11 @@
       const v = this.bufferedAttack || this.touchAttack;
       this.bufferedAttack = false; this.touchAttack = false;
       return v;
+    },
+    // True while the player holds the attack control (mouse held, or touch
+    // attack button held). Enables continuous auto-fire for the bullet weapon.
+    attackHeld() {
+      return this.mouseDown || this.touchAttack;
     },
     consumeDash() {
       const v = this.bufferedDash || this.touchDash;

@@ -350,5 +350,5 @@
     ctx.fillText(b.name, cx, sy - 8);
   }
 
-  global.Bosses = { createBoss, updateBoss, drawBoss, BOSS_DEFS };
+  global.Bosses = { createBoss, updateBoss, drawBoss, handleBossSummon, BOSS_DEFS };
 })(window);
