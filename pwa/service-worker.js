@@ -3,12 +3,13 @@
    ============================================================ */
 'use strict';
 
-const CACHE_NAME = 'one-more-floor-v2';
+const CACHE_NAME = 'one-more-floor-v3';
 
 const CORE_ASSETS = [
   '../index.html',
   '../css/style.css',
   '../js/ads.js',
+  '../js/ownerMode.js',
   '../js/audio.js',
   '../js/settings.js',
   '../js/save.js',
@@ -68,7 +69,11 @@ self.addEventListener('fetch', (event) => {
       }
       return res;
     }).catch(() => {
-      return caches.match(req).then((cached) => cached || caches.match('../index.html'));
+      // Only serve the app shell for navigation requests; a missing JS/CSS
+      // asset should 404 rather than receive the HTML document as its body
+      // (which would be a runtime syntax error for scripts).
+      if (req.mode === 'navigate') return caches.match('../index.html');
+      return caches.match(req);
     });
   };
 

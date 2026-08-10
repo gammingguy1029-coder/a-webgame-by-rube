@@ -20,7 +20,7 @@
     invuln: 0,                  // seconds of invulnerability (dash/revive)
     iframes: 0,                 // short post-hit invulnerability
 
-    attackCooldown: 0, attackAnim: 0, attackSwing: 0,
+    attackCooldown: 0, attackAnim: 0,
 
     powerups: {
       shield: 0, rage: 0, speed: 0, magnet: 0, timewarp: 0, dcoin: 0,
@@ -41,7 +41,7 @@
       this.facing = 1;
       this.onGround = false;
       this.dashCooldown = 0; this.dashTime = 0; this.invuln = 0; this.iframes = 0;
-      this.attackCooldown = 0; this.attackAnim = 0; this.attackSwing = 0;
+      this.attackCooldown = 0; this.attackAnim = 0;
       this.powerups = { shield: 0, rage: 0, speed: 0, magnet: 0, timewarp: 0, dcoin: 0 };
       this.shield = false;
       this.combo = 0; this.comboTimer = 0;
@@ -72,7 +72,7 @@
       if (this.invuln > 0) this.invuln -= dt;
       if (this.iframes > 0) this.iframes -= dt;
       if (this.attackCooldown > 0) this.attackCooldown -= dt;
-      if (this.attackAnim > 0) { this.attackAnim -= dt; this.attackSwing += dt * 10; }
+      if (this.attackAnim > 0) this.attackAnim -= dt;
       if (this.comboTimer > 0) { this.comboTimer -= dt; if (this.comboTimer <= 0) this.combo = 0; }
       const pw = this.powerups;
       for (const k in pw) { if (pw[k] > 0) pw[k] -= dt; }
@@ -221,7 +221,6 @@
       this.attackCooldown = Weapons.getCooldown();
       // Short muzzle flash (replaces the old sword-arc animation).
       this.attackAnim = 0.12;
-      this.attackSwing = 0;
       AudioM.play('attack');
 
       const dmg = this.getDamage();

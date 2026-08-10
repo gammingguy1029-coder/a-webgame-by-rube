@@ -66,6 +66,13 @@
     },
 
     damageText(x, y, amount, color, crit) {
+      // Damage numbers are important info so they always draw, but they still
+      // respect the global particle cap so heavy combat can't grow the list
+      // without bound (recycle the oldest if we're at the limit).
+      if (this.list.length >= MAX_PARTICLES) {
+        const p = this.list.shift();
+        if (!p.active) POOL.push(p);
+      }
       this.list.push(this._textP(x, y, amount, color || '#fff', crit));
     },
 

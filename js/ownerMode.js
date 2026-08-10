@@ -16,7 +16,6 @@
 
   const OWNER_PASSWORD = 'rubethegreat';
   const YT_VIDEO_ID = 'e6gSUVduayY';
-  const YT_SHORTS_URL = 'https://youtube.com/shorts/e6gSUVduayY?si=XBa_ogAF8f_BqaQT';
 
   const OwnerMode = {
     // ---- public state ----
@@ -39,7 +38,6 @@
     // ---- youtube state ----
     _ytLoading: false,
     _ytPlayer: null,
-    _musicEnabled: false,
 
     // =====================================================
     // INIT (called once from Game.init)

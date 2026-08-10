@@ -305,14 +305,45 @@
         if (c.y > -10) c.vy += 900 * dt;
       }
 
-      // trap speed modifier - handled inside rooms via ctx; also update boss hp
-      if (this.room.boss) {
-        const bh = this.room.boss.hp, bm = this.room.boss.maxHp;
-        document.getElementById('bossBarWrap').classList.remove('hidden');
-        document.getElementById('bossName').textContent = this.room.boss.name;
-        document.getElementById('bossBar').innerHTML = `<div style="width:${Math.max(0, bh / bm * 100)}%"></div>`;
+      // Update boss bar if a boss is present.
+      if (this.room.boss && this.room.boss.alive) {
+        this.updateBossBar(this.room.boss.name, this.room.boss.hp, this.room.boss.maxHp);
       } else {
-        document.getElementById('bossBarWrap').classList.add('hidden');
+        this.hideBossBar();
+      }
+    },
+
+    // ---- Boss bar (only touches the DOM when the value actually changes, so
+    //      we don't rebuild innerHTML / re-write styles every frame) ----
+    _bossBarPct: -1,
+    _bossBarName: '',
+    _bossBarShown: false,
+    updateBossBar(name, hp, maxHp) {
+      const wrap = document.getElementById('bossBarWrap');
+      if (!wrap) return;
+      if (!this._bossBarShown) {
+        wrap.classList.remove('hidden');
+        this._bossBarShown = true;
+      }
+      if (name !== this._bossBarName) {
+        const nameEl = document.getElementById('bossName');
+        if (nameEl) nameEl.textContent = name;
+        this._bossBarName = name;
+      }
+      const pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
+      if (Math.round(pct) !== this._bossBarPct) {
+        const bar = document.getElementById('bossBar');
+        if (bar) bar.innerHTML = `<div style="width:${pct}%"></div>`;
+        this._bossBarPct = Math.round(pct);
+      }
+    },
+    hideBossBar() {
+      const wrap = document.getElementById('bossBarWrap');
+      if (wrap && this._bossBarShown) {
+        wrap.classList.add('hidden');
+        this._bossBarShown = false;
+        this._bossBarPct = -1;
+        this._bossBarName = '';
       }
     },
 
@@ -425,16 +456,6 @@
       this.room.entities.push(en);
     },
 
-    spawnAttackSwing(px, py, facing, reach, arc, hit) {
-      // visual particles for the swing
-      const base = facing > 0 ? 0 : Math.PI;
-      for (let i = 0; i < (hit ? 12 : 5); i++) {
-        const ang = base + (Math.random() - 0.5) * arc;
-        const r = reach * (0.5 + Math.random() * 0.5);
-        this.particles.spawn({ x: px + Math.cos(ang) * r, y: py + Math.sin(ang) * r, vx: Math.cos(ang) * 100, vy: Math.sin(ang) * 100, life: 0.2, size: 3, color: '#9df3ff', shape: 'circle', glow: true });
-      }
-    },
-
     damageEntity(e, dmg, dir, crit) {
       if (!e.alive) return;
       // boss shield
@@ -456,9 +477,7 @@
         this.registerKill(e, e.type === 'boss');
       }
       if (e.type === 'boss') {
-        // update boss bar
-        const bh = e.hp, bm = e.maxHp;
-        document.getElementById('bossBar').innerHTML = `<div style="width:${Math.max(0, bh / bm * 100)}%"></div>`;
+        this.updateBossBar(e.name, e.hp, e.maxHp);
       }
     },
 
@@ -598,17 +617,23 @@
       // yet — banking happens once when the player leaves the run (revive keeps
       // the run alive, so it must not double-bank).
       this.run.displayCoins = Math.floor(this.run.runCoins * Upgrades.coinMultiplier());
+      const pd = Save.get().playerData;
+      // Best floor shown on the death screen should include what was reached
+      // THIS run, even though the run isn't banked yet. For normal runs the
+      // live continueFloor tracks the highest reached; for daily runs the
+      // highest this run is the local value.
+      const bestThisRun = this.run.daily ? this.run.highestThisRun : Math.max(this.run.highestThisRun, pd.continueFloor || 1);
       UI.showDeath({
         floor: this.run.floor,
         score: this.run.score,
         coins: this.run.displayCoins,
         kills: this.run.kills,
         time: Math.floor(this.run.timeSurvived),
-        bestFloor: Save.get().playerData.highestFloor,
+        bestFloor: Math.max(pd.highestFloor, bestThisRun),
         canRevive: this.run.canRevive && Ads.enabled,
         // The floor the player will continue from when they retry (kept on the
         // local device so progress is never reset to floor 1).
-        continueFloor: this.run.daily ? 1 : (Save.get().playerData.continueFloor || 1),
+        continueFloor: this.run.daily ? 1 : (pd.continueFloor || 1),
       });
     },
 

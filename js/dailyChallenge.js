@@ -73,11 +73,6 @@
       Save.persist();
     },
 
-    isCompletedToday() {
-      const s = Save.get().dailyChallenge;
-      return this.isToday(s) && s.completed;
-    },
-
     claimReward() {
       const s = Save.get();
       const dc = s.dailyChallenge;

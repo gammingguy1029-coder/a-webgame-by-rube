@@ -242,7 +242,12 @@
   }
 
   function weightedChest(floor) {
-    const r = Math.random() + floor * 0.008;
+    // The LUCK upgrade increases the chance of better rarities. Each level adds
+    // 2% (e.g. luck level 10 -> +0.20 to the roll). Upgrades is loaded before
+    // this runs at generation time, so reading it here is safe.
+    let luck = 0;
+    try { if (global.Upgrades) luck = (Upgrades.luckBonus() || 0) / 100; } catch (e) { luck = 0; }
+    const r = Math.random() + floor * 0.008 + luck;
     if (r < 0.6) return 'common';
     if (r < 0.85) return 'rare';
     if (r < 0.97) return 'epic';

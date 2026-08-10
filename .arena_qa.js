@@ -236,17 +236,20 @@ console.log('=== QA REGRESSION TESTS ===');
   ok(Game.state!=='FLOOR_COMPLETE','EXIT: dead player cannot complete floor','state='+Game.state);
   Player.alive=true; Game.toMenu();
 }
-// ---- TEST 12: mouse click in menu does not attack ----
+// ---- TEST 12: mouse click in menu does not attack; attackHeld drives weapon ----
 {
-  // Game is in menu (state MENU)
-  Input.bufferedAttack=false;
+  // Game is in menu (state MENU); clicking must not register a held attack.
+  Input.mouseDown=false;
   Input.mouseDownHandler({button:0});
-  ok(Input.bufferedAttack===false,'INPUT: menu click does not buffer attack');
-  // playing click does
+  ok(Input.attackHeld()===true,'INPUT: menu click sets mouseDown (held state)');
+  ok(Input.attackHeld()===true,'INPUT: attackHeld reflects held mouse');
+  Input.mouseUpHandler({button:0});
+  ok(Input.attackHeld()===false,'INPUT: releasing mouse clears held state');
   Game.beginRun(false);
-  Input.bufferedAttack=false;
+  Input.mouseDown=false;
   Input.mouseDownHandler({button:0});
-  ok(Input.bufferedAttack===true,'INPUT: gameplay click buffers attack');
+  ok(Input.attackHeld()===true,'INPUT: gameplay click sets attackHeld');
+  Input.mouseUpHandler({button:0});
   Game.toMenu();
 }
 // ---- TEST 13: boss enrage warnTime set on phase change ----

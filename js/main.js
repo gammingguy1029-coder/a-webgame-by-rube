@@ -25,6 +25,9 @@
       console.warn('localStorage unavailable — progress will not persist this session.');
     }
 
+    // Enable ads if a provider is configured (no-op / disabled when none is).
+    try { Ads.initializeAds(); } catch (e) { /* ads must never break boot */ }
+
     registerSW();
 
     Game.init(document.getElementById('gameCanvas'));

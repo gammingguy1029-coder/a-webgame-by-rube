@@ -9,7 +9,6 @@
     keys: {},
     // Buffered "just pressed" actions (consumed by game each frame).
     bufferedJump: false,
-    bufferedAttack: false,
     bufferedDash: false,
 
     touchMove: 0,        // -1, 0, 1 set by mobile controls
@@ -51,7 +50,7 @@
       this.touchMove = 0;
       this.touchJump = this.touchAttack = this.touchDash = false;
       this.mouseDown = false;
-      this.bufferedJump = this.bufferedAttack = this.bufferedDash = false;
+      this.bufferedJump = this.bufferedDash = false;
     },
 
     keyDown(e) {
@@ -76,11 +75,6 @@
     mouseDownHandler(e) {
       if (e.button === 0) {
         this.mouseDown = true;
-        // Only buffer an attack while actually playing; clicking UI buttons
-        // (PLAY, upgrades, etc.) must not trigger a swing.
-        if (global.Game && Game.state === 'PLAYING') {
-          this.bufferedAttack = true;
-        }
       }
       AudioM.unlock();
     },
@@ -99,11 +93,6 @@
     consumeJump() {
       const v = this.bufferedJump || this.touchJump;
       this.bufferedJump = false; this.touchJump = false;
-      return v;
-    },
-    consumeAttack() {
-      const v = this.bufferedAttack || this.touchAttack;
-      this.bufferedAttack = false; this.touchAttack = false;
       return v;
     },
     // True while the player holds the attack control (mouse held, or touch

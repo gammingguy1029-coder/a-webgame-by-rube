@@ -146,8 +146,12 @@
     },
 
     setMusicPlaying(on) {
-      if (on && !this._musicOn) { this._musicOn = true; this._musicStep = 0; this.startMusic(); }
-      else if (!on && this._musicOn) {
+      if (on) {
+        // startMusic() sets _musicOn itself; don't set it here first or the
+        // guard inside startMusic() will early-return and the interval is
+        // never created (music would never resume after a pause).
+        if (!this._musicOn) { this._musicStep = 0; this.startMusic(); }
+      } else {
         this._musicOn = false;
         if (this.musicTimer) { clearInterval(this.musicTimer); this.musicTimer = null; }
       }
