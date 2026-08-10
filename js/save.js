@@ -20,7 +20,7 @@
 
   const defaultSave = {
     saveVersion: SAVE_VERSION,
-    playerData: { coins: 0, highestFloor: 1, bestScore: 0 },
+    playerData: { coins: 0, highestFloor: 1, bestScore: 0, continueFloor: 1 },
     upgrades: {
       health: 0, damage: 0, speed: 0, dash: 0,
       attackSpeed: 0, luck: 0, coinBonus: 0,
@@ -61,6 +61,9 @@
       coins: int(pd.coins, 0, 0, 1e15),
       highestFloor: int(pd.highestFloor, 1, 1, 1e9),
       bestScore: int(pd.bestScore, 0, 0, 1e15),
+      // The floor the player will continue from after dying (never resets to 1
+      // on death/restart, so progress is kept on the local device).
+      continueFloor: int(pd.continueFloor, 1, 1, 1e9),
     };
 
     const ug = raw.upgrades || {};

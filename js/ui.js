@@ -339,6 +339,14 @@
       } else {
         reviveBtn.style.display = 'none';
       }
+      // Make the restart clearly say it continues from the saved floor (so the
+      // player knows dying doesn't reset them to floor 1).
+      const retryBtn = $('btnTryAgain');
+      if (retryBtn && stats.continueFloor && stats.continueFloor > 1) {
+        retryBtn.textContent = 'CONTINUE (FLOOR ' + stats.continueFloor + ')';
+      } else if (retryBtn) {
+        retryBtn.textContent = 'TRY AGAIN';
+      }
       this.showScreen('deathScreen');
     },
     bindDeath() {

@@ -171,8 +171,11 @@
       this.bankRun();
       const s = Save.get();
       s.statistics.totalRuns += 1;
+      // Normal runs continue from the last floor reached (saved locally) so
+      // dying never resets you to floor 1. Daily runs always start at floor 1.
+      const startFloor = daily ? 1 : (s.playerData.continueFloor || 1);
       this.run = {
-        floor: 1,
+        floor: startFloor,
         score: 0,
         runCoins: 0,
         kills: 0,
@@ -183,7 +186,7 @@
         reviveUsed: false,
         daily: !!daily,
         dailyFloor: 0,
-        highestThisRun: 1,
+        highestThisRun: startFloor,
         ended: false,
       };
       this.pendingDifficulty = 'safe';
@@ -213,10 +216,27 @@
       this.modifiers.id = id;
     },
 
+    // Persist the current floor so a restart (death / menu -> play) continues
+    // from the same level instead of resetting to floor 1.
+    saveContinueFloor(floor) {
+      if (!floor || floor < 1) return;
+      const pd = Save.get().playerData;
+      if (floor > pd.continueFloor) {
+        pd.continueFloor = floor;
+        Save.persist();
+      }
+    },
+
     generateRoom(floor) {
       const data = Procedural.generateFloor(floor, { difficulty: this.pendingDifficulty });
       if (this.modifiers.forceDarkness) data.event = 'darkness';
       this.room = Rooms.buildRoom(data);
+      // Remember the highest floor reached so far in this run.
+      if (this.run) {
+        this.run.highestThisRun = Math.max(this.run.highestThisRun, floor);
+        // Persist the continue floor (daily runs keep their own fixed floor 1).
+        if (!this.run.daily) this.saveContinueFloor(floor);
+      }
       Camera.setBounds(this.room.bounds);
       // place player
       Player.x = this.room.start.x;
@@ -586,6 +606,9 @@
         time: Math.floor(this.run.timeSurvived),
         bestFloor: Save.get().playerData.highestFloor,
         canRevive: this.run.canRevive && Ads.enabled,
+        // The floor the player will continue from when they retry (kept on the
+        // local device so progress is never reset to floor 1).
+        continueFloor: this.run.daily ? 1 : (Save.get().playerData.continueFloor || 1),
       });
     },
 
