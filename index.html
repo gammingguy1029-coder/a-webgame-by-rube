@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="RUBE — climb the endless mysterious tower. Just one more floor.">
+<title>RUBE</title>
+<link rel="manifest" href="pwa/manifest.json">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+<link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- Loading screen -->
+<div id="loading" class="screen loading-screen">
+  <div class="loading-inner">
+    <div class="game-title">RUBE</div>
+    <div class="tower-animation" id="towerAnimation"></div>
+    <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+    <div class="loading-text" id="loadingText">Ascending...</div>
+  </div>
+</div>
+
+<!-- Rotate device overlay -->
+<div id="rotateOverlay" class="rotate-overlay">
+  <div class="rotate-box">
+    <div class="phone-icon"></div>
+    <div class="rotate-title">ROTATE YOUR DEVICE</div>
+    <div class="rotate-sub">Landscape mode recommended</div>
+  </div>
+</div>
+
+<!-- Main game canvas -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- HUD (in-game overlay) -->
+<div id="hud" class="hud hidden">
+  <div class="hud-top">
+    <div class="hud-left">
+      <div class="hud-floor">FLOOR <span id="hudFloor">1</span></div>
+      <div class="hud-score">SCORE <span id="hudScore">0</span></div>
+    </div>
+    <div class="hud-center">
+      <div class="health-wrap"><div class="health-bar" id="healthBar"></div><span class="health-text" id="healthText">100</span></div>
+      <div class="boss-bar-wrap hidden" id="bossBarWrap"><div class="boss-name" id="bossName">BOSS</div><div class="boss-bar" id="bossBar"></div></div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-coins"><span class="coin-ico">●</span><span id="hudCoins">0</span></div>
+      <div class="hud-combo" id="hudCombo"></div>
+    </div>
+  </div>
+  <div class="powerup-row" id="powerupRow"></div>
+  <div class="dash-indicator" id="dashIndicator">DASH</div>
+  <div id="touchControls" class="touch-controls hidden">
+    <div class="tc-left">
+      <div class="tc-btn" data-touch="left" id="tcLeft">◀</div>
+      <div class="tc-btn" data-touch="right" id="tcRight">▶</div>
+    </div>
+    <div class="tc-right">
+      <div class="tc-btn small" data-touch="jump" id="tcJump">⬆</div>
+      <div class="tc-row">
+        <div class="tc-btn small" data-touch="dash" id="tcDash">»</div>
+        <div class="tc-btn small" data-touch="attack" id="tcAttack">◎</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pause button -->
+<div id="pauseBtn" class="pause-btn hidden">❚❚</div>
+
+<!-- Screens -->
+<div id="menuScreen" class="screen menu-screen hidden">
+  <div class="menu-bg-glow"></div>
+  <button id="ownerBtn" class="owner-btn">OWNER</button>
+  <div class="menu-inner">
+    <div class="game-title big">RUBE</div>
+    <div class="subtitle">How high can you climb?</div>
+    <div class="menu-stats">
+      <div class="stat-cell"><span class="stat-label">HIGHEST FLOOR</span><span class="stat-val" id="mHighestFloor">1</span></div>
+      <div class="stat-cell"><span class="stat-label">BEST SCORE</span><span class="stat-val" id="mBestScore">0</span></div>
+      <div class="stat-cell"><span class="stat-label">TOTAL COINS</span><span class="stat-val" id="mTotalCoins">0</span></div>
+    </div>
+    <div class="menu-buttons">
+      <button class="menu-btn primary" id="btnPlay">▶ PLAY</button>
+      <button class="menu-btn" id="btnUpgrades">⬆ UPGRADES</button>
+      <button class="menu-btn" id="btnDaily">☀ DAILY CHALLENGE</button>
+      <button class="menu-btn" id="btnStats">📊 STATISTICS</button>
+      <button class="menu-btn" id="btnSettings">⚙ SETTINGS</button>
+    </div>
+    <div class="ad-banner" id="menuBannerAd"><div class="ad-placeholder">[ BANNER AD ]</div></div>
+    <div class="menu-footer">v1.0 • Playable offline • PWA</div>
+  </div>
+</div>
+
+<div id="upgradesScreen" class="screen hidden">
+  <div class="panel">
+    <h1 class="panel-title">UPGRADES</h1>
+    <div class="coin-balance"><span class="coin-ico">●</span><span id="upgCoins">0</span></div>
+    <div class="upgrade-list" id="upgradeList"></div>
+    <button class="menu-btn back" id="btnUpgBack">← BACK</button>
+  </div>
+</div>
+
+<div id="dailyScreen" class="screen hidden">
+  <div class="panel">
+    <h1 class="panel-title">DAILY CHALLENGE</h1>
+    <div class="daily-date" id="dailyDate"></div>
+    <div class="daily-desc" id="dailyDesc"></div>
+    <div class="daily-result" id="dailyResult"></div>
+    <button class="menu-btn primary" id="btnDailyPlay">PLAY DAILY</button>
+    <button class="menu-btn primary" id="btnDailyClaim" style="display:none">CLAIM REWARD</button>
+    <button class="menu-btn back" id="btnDailyBack">← BACK</button>
+  </div>
+</div>
+
+<div id="statsScreen" class="screen hidden">
+  <div class="panel">
+    <h1 class="panel-title">STATISTICS</h1>
+    <div class="stats-grid" id="statsGrid"></div>
+    <button class="menu-btn back" id="btnStatsBack">← BACK</button>
+  </div>
+</div>
+
+<div id="settingsScreen" class="screen hidden">
+  <div class="panel">
+    <h1 class="panel-title">SETTINGS</h1>
+    <div class="settings-list" id="settingsList"></div>
+    <button class="menu-btn back" id="btnSettingsBack">← BACK</button>
+  </div>
+</div>
+
+<!-- Floor choice overlay -->
+<div id="floorChoiceScreen" class="screen hidden">
+  <div class="panel choice-panel">
+    <h1 class="panel-title">CHOOSE YOUR PATH</h1>
+    <div class="choice-desc" id="choiceDesc"></div>
+    <div class="choice-cards" id="choiceCards"></div>
+    <button class="menu-btn back" id="btnChoiceSkip">SKIP (SAFE)</button>
+  </div>
+</div>
+
+<!-- Chest reward overlay -->
+<div id="chestScreen" class="screen hidden">
+  <div class="panel chest-panel">
+    <h1 class="panel-title" id="chestTitle">TREASURE</h1>
+    <div class="chest-anim" id="chestAnim">🎁</div>
+    <div class="chest-reward" id="chestReward"></div>
+    <button class="menu-btn primary" id="btnChestOk">CONTINUE</button>
+  </div>
+</div>
+
+<!-- Floor complete overlay -->
+<div id="floorCompleteScreen" class="screen hidden">
+  <div class="panel">
+    <h1 class="panel-title">FLOOR CLEARED!</h1>
+    <div class="fc-row"><span>Floor</span><span id="fcFloor">1</span></div>
+    <div class="fc-row"><span>Score</span><span id="fcScore">0</span></div>
+    <div class="fc-row"><span>Coins</span><span id="fcCoins">0</span></div>
+    <button class="menu-btn primary" id="btnContinue">CONTINUE</button>
+  </div>
+</div>
+
+<!-- Death screen -->
+<div id="deathScreen" class="screen hidden">
+  <div class="panel death-panel">
+    <h1 class="panel-title you-died">YOU DIED</h1>
+    <div class="death-stats">
+      <div class="d-row"><span>Floor reached</span><span id="dFloor">1</span></div>
+      <div class="d-row"><span>Score</span><span id="dScore">0</span></div>
+      <div class="d-row"><span>Coins earned</span><span id="dCoins">0</span></div>
+      <div class="d-row"><span>Enemies defeated</span><span id="dKills">0</span></div>
+      <div class="d-row"><span>Time survived</span><span id="dTime">0s</span></div>
+      <div class="d-row"><span>Best floor</span><span id="dBestFloor">1</span></div>
+    </div>
+    <button class="menu-btn primary" id="btnRevive">REVIVE</button>
+    <button class="menu-btn" id="btnTryAgain">TRY AGAIN</button>
+    <button class="menu-btn" id="btnMainMenu">MAIN MENU</button>
+  </div>
+</div>
+
+<!-- Pause menu -->
+<div id="pauseScreen" class="screen hidden">
+  <div class="panel">
+    <h1 class="panel-title">PAUSED</h1>
+    <button class="menu-btn primary" id="btnResume">RESUME</button>
+    <button class="menu-btn" id="btnPauseSettings">SETTINGS</button>
+    <button class="menu-btn danger" id="btnQuitRun">QUIT RUN</button>
+  </div>
+</div>
+
+<!-- Tutorial -->
+<div id="tutorialScreen" class="screen hidden">
+  <div class="panel tutorial-panel">
+    <h1 class="panel-title">HOW TO PLAY</h1>
+    <div class="tutorial-item"><div class="tut-ico">◀▶</div><div>MOVE — A/D or Left/Right arrows</div></div>
+    <div class="tutorial-item"><div class="tut-ico">␣</div><div>JUMP — Space</div></div>
+    <div class="tutorial-item"><div class="tut-ico">◎</div><div>FIRE — Left mouse / touch (hold to auto-fire)</div></div>
+    <div class="tutorial-item"><div class="tut-ico">»</div><div>DASH — Shift</div></div>
+    <div class="tutorial-item"><div class="tut-ico">➤</div><div>REACH THE EXIT to climb higher</div></div>
+    <button class="menu-btn primary" id="btnTutStart">START CLIMBING</button>
+    <button class="menu-btn back" id="btnTutSkip">SKIP TUTORIAL</button>
+  </div>
+</div>
+
+<!-- Owner password dialog -->
+<div id="ownerPassOverlay" class="confirm-overlay hidden">
+  <div class="confirm-box owner-pass-box">
+    <div class="op-title">OWNER ACCESS</div>
+    <div class="op-sub">Enter owner password</div>
+    <input type="password" id="ownerPassInput" class="op-input" placeholder="••••••••" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="op-msg" id="ownerPassMsg"></div>
+    <div class="confirm-actions">
+      <button class="menu-btn" id="ownerPassCancel">CANCEL</button>
+      <button class="menu-btn primary" id="ownerPassEnter">ENTER</button>
+    </div>
+  </div>
+</div>
+
+<!-- Owner panel -->
+<div id="ownerPanelScreen" class="screen owner-panel-screen hidden">
+  <div class="panel owner-panel">
+    <button class="owner-panel-close" id="ownerPanelClose" aria-label="Close panel">✕</button>
+    <h1 class="panel-title">RUBE OWNER PANEL</h1>
+    <div class="owner-active">OWNER MODE <span class="owner-dot"></span> ACTIVE</div>
+    <div class="owner-controls">
+      <div class="owner-row">
+        <span class="ow-label">❤️ Infinite Health</span>
+        <div class="toggle" id="owInfHealth" data-owner-toggle="infHealth"></div>
+      </div>
+      <div class="owner-row">
+        <span class="ow-label">✨ Rube Aura</span>
+        <div class="toggle" id="owAura" data-owner-toggle="aura"></div>
+      </div>
+      <div class="owner-row">
+        <span class="ow-label">🎵 Owner Music</span>
+        <div class="toggle" id="owMusic" data-owner-toggle="music"></div>
+      </div>
+      <button class="menu-btn" id="owResetEffects">🔄 Reset Effects</button>
+      <button class="menu-btn danger" id="owExit">🚪 Exit Owner Mode</button>
+    </div>
+  </div>
+</div>
+
+<!-- Owner music autoplay hint -->
+<div id="ownerMusicHint" class="owner-music-hint hidden">▶ CLICK TO ENABLE OWNER MUSIC</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="js/ads.js"></script>
+<script src="js/ownerMode.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/save.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/input.js"></script>
+<script src="js/mobileControls.js"></script>
+<script src="js/weapons.js"></script>
+<script src="js/player.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/bosses.js"></script>
+<script src="js/collision.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/procedural.js"></script>
+<script src="js/rooms.js"></script>
+<script src="js/upgrades.js"></script>
+<script src="js/dailyChallenge.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
